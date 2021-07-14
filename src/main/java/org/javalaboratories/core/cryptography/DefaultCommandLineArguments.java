@@ -3,6 +3,7 @@ package org.javalaboratories.core.cryptography;
 import org.apache.commons.cli.*;
 import org.javalaboratories.core.Try;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
 
     private static final String DEFAULT_KEYSTORE_ALIAS = "javalaboratories-org";
     private static final String DEFAULT_KEYSTORE_VAULT_FILE = "keys-vault.jks";
+    private static final String HOME = "EM_HOME";
 
     private static final String COMMAND_SYNTAX = "enigma-machine [--encrypt --certificate=<arg>] | " +
             "[--decrypt --private-key-password=<arg>] [--output-file=<arg>] -file=<arg>";
@@ -186,9 +188,11 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
     }
 
     private Map<String,String> createDefaultValues() {
+        String enigmaHome = System.getenv(HOME);
+        String keyStoreDir = enigmaHome == null ? "." : enigmaHome+File.separator;
         Map<String,String> result = new HashMap<>();
         result.put("a", DEFAULT_KEYSTORE_ALIAS);
-        result.put("v", DEFAULT_KEYSTORE_VAULT_FILE);
+        result.put("v", keyStoreDir+DEFAULT_KEYSTORE_VAULT_FILE);
         return result;
     }
 
