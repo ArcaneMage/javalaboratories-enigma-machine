@@ -19,7 +19,8 @@ public final class Application {
                 ApplicationBuildInformation build = new ApplicationBuildInformation();
                 logger.info("\nEnigma Machine v{}, build ({})",build.getVersion(), build.getTimestamp());
                 logger.info("Java Laboratories, Kevin Henry (c) 2021\n");
-                arguments.parse(args);
+                arguments.parse(args)
+                        .onFailure(s -> logger.error("Arguments: {}",s.getMessage()));
                 EnigmaMachine machine = new EnigmaMachine(arguments);
                 if (!machine.execute())
                     System.exit(1);

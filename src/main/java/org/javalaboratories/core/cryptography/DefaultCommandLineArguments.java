@@ -49,15 +49,19 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
      * {@inheritDoc}
      */
     @Override
-    public void parse(final String[] args) {
+    public Try<Boolean> parse(final String[] args) {
         Objects.requireNonNull(args);
-        CommandLineParser parser = new DefaultParser();
-        commandLine = Try.of(() -> parser.parse(options,args))
-                .orElseThrow(() -> new IllegalArgumentException("Review arguments with the -h switch"));
+        try {
+            CommandLineParser parser = new DefaultParser();
+            commandLine = parser.parse(options, args);
 
-        applyArgumentRules();
-        mode = commandLine.hasOption(ARG_DECRYPT) ? Mode.DECRYPT : Mode.ENCRYPT;
-        initialised = true;
+            applyArgumentRules();
+            mode = commandLine.hasOption(ARG_DECRYPT) ? Mode.DECRYPT : Mode.ENCRYPT;
+            initialised = true;
+            return Try.success(initialised);
+        } catch (Exception e) {
+            return Try.failure(e);
+        }
     }
 
     /**

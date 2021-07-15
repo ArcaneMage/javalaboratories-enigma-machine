@@ -1,6 +1,7 @@
 package org.javalaboratories.core.cryptography;
 
 import org.javalaboratories.core.Maybe;
+import org.javalaboratories.core.Try;
 import org.javalaboratories.core.cryptography.keys.PrivateKeyStore;
 import org.javalaboratories.core.handlers.Handlers;
 import org.javalaboratories.core.util.Arguments;
@@ -10,16 +11,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -97,18 +95,19 @@ public class EnigmaMachine {
      */
     public boolean execute() {
         AsymmetricCryptography cryptography = CryptographyFactory.getSunAsymmetricCryptography();
-        InputStream istream = getInputStream(fileInputPath)
-                .orElseThrow(() -> new IllegalArgumentException(String.format("Input/output file error -- does the " +
-                        "file \"%s\" exist? ",fileInputPath)));
-
-        boolean result;
-        StopWatch watch = StopWatch.watch("execute");
-        if ( (result = watch.time(() -> arguments.getModeValue() == Mode.ENCRYPT
-                ? doEncrypt(cryptography,istream)
-                : doDecrypt(cryptography,istream))) ) {
-            logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
-        }
-        return result;
+        return Try.of(() -> new FileInputStream(fileInputPath.toFile()))
+                .map(istream -> {
+                    boolean result;
+                    StopWatch watch = StopWatch.watch("execute");
+                    if ( (result = watch.time(() -> arguments.getModeValue() == Mode.ENCRYPT
+                            ? doEncrypt(cryptography,istream)
+                            : doDecrypt(cryptography,istream))) ) {
+                        logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
+                    }
+                    return result;
+                })
+                .onFailure(s -> logger.error("Input/output file error -- does the file \"{}\" exist? ",fileInputPath))
+                .fold(f -> false,f -> true);
     }
 
     /**
@@ -124,22 +123,14 @@ public class EnigmaMachine {
      */
     protected boolean doEncrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
-        try {
-            CertificateFactory factory = CertificateFactory.getInstance(PUBLIC_CERTIFICATE_TYPE);
-            Certificate certificate = factory.generateCertificate(new FileInputStream(arguments.getValue(ARG_CERTIFICATE)));
 
-            OutputStream ostream = getOutputFileStream();
+        return Try.of(() -> CertificateFactory.getInstance(PUBLIC_CERTIFICATE_TYPE))
+                .flatMap(factory -> Try.of(() -> factory.generateCertificate(new FileInputStream(arguments.getValue(ARG_CERTIFICATE)))))
 
-            cryptography.encrypt(certificate, istream, ostream);
-            return true;
-        } catch (CertificateException e) {
-            logger.error("Do not recognise certificate format: {}", e.getMessage());
-        } catch (IOException e) {
-            logger.error("Input/output file error -- does the files exist?: {}", e.getMessage());
-        } catch (CryptographyException e) {
-            logger.error("Failed to read encrypted file: {}", e.getMessage());
-        }
-        return false;
+                .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream))
+                .onFailure(f -> logger.error("Failed to read encrypted file: {}", f.getMessage()))
+
+                .fold(f -> false, f -> true);
     }
 
     /**
@@ -159,26 +150,17 @@ public class EnigmaMachine {
      */
     protected boolean doDecrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
-        try {
-            PrivateKeyStore store = PrivateKeyStore.builder()
-                    .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
-                    .storePassword(DEFAULT_KEYSTORE_PASSWORD)
-                    .build();
 
-            PrivateKey key = store.getKey(privateKeyAlias,arguments.getValue(ARG_PRIVATE_KEYS_PASSWORD))
-                    .orElseThrow(() -> new IllegalArgumentException("Private key not found/undefined"));
-            OutputStream ostream = getOutputFileStream();
+        return Try.of(() -> PrivateKeyStore.builder()
+                        .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
+                        .storePassword(DEFAULT_KEYSTORE_PASSWORD)
+                        .build())
+                .flatMap(this::tryPrivateKey)
 
-            cryptography.decrypt(key,istream,ostream);
-            return true;
-        } catch (FileNotFoundException e) {
-            logger.error("Failed to read keys-vaults file: {}",e.getMessage());
-        } catch (CryptographyException e) {
-            logger.error("Failed to decrypt file: {}",e.getMessage());
-        } catch (IllegalArgumentException e) {
-            logger.error("Wrong private key password? {}",e.getMessage());
-        }
-        return false;
+                .flatMap(key -> tryDecrypt(cryptography,key,istream))
+                .onFailure(f -> logger.error("Failed to decrypt file: {}",f.getMessage()))
+
+                .fold(f -> false, f -> true);
     }
 
     private File defaultOutputFile() {
@@ -193,14 +175,30 @@ public class EnigmaMachine {
                 .orElseGet(Handlers.supplier(() -> new FileOutputStream(defaultOutputFile())));
     }
 
-    private Maybe<InputStream> getInputStream(final Path path) {
-        Objects.requireNonNull(path);
-        InputStream result;
+    private Try<AsymmetricCryptography> tryDecrypt(AsymmetricCryptography cryptography, PrivateKey privateKey, InputStream istream) {
+        return Try.of (() -> {
+            OutputStream ostream = getOutputFileStream();
+            cryptography.decrypt(privateKey,istream,ostream);
+            return cryptography;
+        });
+    }
+
+    private Try<AsymmetricCryptography> tryEncrypt(AsymmetricCryptography cryptography, Certificate cert,InputStream istream) {
+        return Try.of(() -> {
+            OutputStream ostream = getOutputFileStream();
+            cryptography.encrypt(cert, istream, ostream);
+            return cryptography;
+        });
+    }
+
+    private Try<PrivateKey> tryPrivateKey(PrivateKeyStore store) {
+        PrivateKey key;
         try {
-            result = new FileInputStream(path.toFile());
-        } catch (IOException e) {
-            return Maybe.empty();
+            key = store.getKey(privateKeyAlias, arguments.getValue(ARG_PRIVATE_KEYS_PASSWORD))
+                    .orElseThrow(() -> new IllegalArgumentException("Private key not found/undefined"));
+            return Try.success(key);
+        } catch (CryptographyException | IllegalArgumentException e) {
+            return Try.failure(e);
         }
-        return Maybe.of(result);
     }
 }

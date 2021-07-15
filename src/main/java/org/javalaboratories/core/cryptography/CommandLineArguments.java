@@ -1,5 +1,7 @@
 package org.javalaboratories.core.cryptography;
 
+import org.javalaboratories.core.Try;
+
 import java.io.PrintWriter;
 
 /**
@@ -41,7 +43,7 @@ public interface CommandLineArguments {
      * @throws IllegalArgumentException if any of arguments breaches the
      * validation rules.
      */
-    void parse(final String[] args);
+    Try<Boolean> parse(final String[] args);
 
     /**
      * Returns the value associated with a given parameter.
