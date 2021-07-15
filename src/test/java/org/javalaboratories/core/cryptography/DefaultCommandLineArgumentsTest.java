@@ -27,7 +27,10 @@ public class DefaultCommandLineArgumentsTest {
     @Test
     public void testParse_AllowableDecryptArguments_Fail() {
         String[] args = toArgs("-p=6553772 -f=secret-text.txt._encrypted -d -c=javalaboratories-org.cer");
-        assertThrows(IllegalArgumentException.class, () -> arguments.parse(args));
+
+        boolean result = arguments.parse(args)
+                .fold(f -> false, f -> true);
+        assertFalse(result);
     }
 
     @Test
@@ -40,25 +43,33 @@ public class DefaultCommandLineArgumentsTest {
     @Test
     public void testParse_AllowableEncryptArguments_Fail() {
         String[] args = toArgs("-c=javalaboratories-org.cer -f=secret-text.txt -e -a=private-key-alias -p=65537773 -v=private-vault.jks");
-        assertThrows(IllegalArgumentException.class, () -> arguments.parse(args));
+        boolean result = arguments.parse(args)
+                .fold(f -> false, f -> true);
+        assertFalse(result);
     }
 
     @Test
     public void testParse_InsufficientEncryptArguments_Fail() {
         String[] args = toArgs("-e");
-        assertThrows(IllegalArgumentException.class, () -> arguments.parse(args));
+        boolean result = arguments.parse(args)
+                .fold(f -> false, f -> true);
+        assertFalse(result);
     }
 
     @Test
     public void testParse_InsufficientDecryptArguments_Fail() {
         String[] args = toArgs("-d");
-        assertThrows(IllegalArgumentException.class, () -> arguments.parse(args));
+        boolean result = arguments.parse(args)
+                .fold(f -> false, f -> true);
+        assertFalse(result);
     }
 
     @Test
     public void testParse_ZeroArguments_Fail() {
         String[] args = toArgs("");
-        assertThrows(IllegalArgumentException.class, () -> arguments.parse(args));
+        boolean result = arguments.parse(args)
+                .fold(f -> false, f -> true);
+        assertFalse(result);
     }
 
     @Test
