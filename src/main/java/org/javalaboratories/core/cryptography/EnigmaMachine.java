@@ -146,9 +146,9 @@ public class EnigmaMachine {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
 
         return Try.of(() -> PrivateKeyStore.builder()
-                    .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
-                    .storePassword(DEFAULT_KEYSTORE_PASSWORD)
-                    .build())
+                                .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
+                                .storePassword(DEFAULT_KEYSTORE_PASSWORD)
+                                .build())
                 .flatMap(this::tryPrivateKey)
                 .flatMap(key -> tryDecrypt(cryptography,key,istream));
     }
