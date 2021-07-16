@@ -85,8 +85,8 @@ public class EnigmaMachine {
      * This is the method that performs the encryption/decryption work, as
      * dictated by the {@link CommandLineArguments} arguments object.
      * <p>
-     * It delegates the process to either {@code this#doEncrypt} or {@code
-     * this#doDecrypt} methods depending on the command-line arguments. If an
+     * It delegates the process to either {@code this#tryEncrypt} or {@code
+     * this#tryDecrypt} methods depending on the command-line arguments. If an
      * exception occurs, it will be logged to the console and {@code false}
      * as opposed to {@code true} is returned.
      *
@@ -96,17 +96,16 @@ public class EnigmaMachine {
     public boolean execute() {
         AsymmetricCryptography cryptography = CryptographyFactory.getSunAsymmetricCryptography();
         return Try.of(() -> new FileInputStream(fileInputPath.toFile()))
-                .map(istream -> {
-                    boolean result;
+                .flatMap(istream -> {
+                    Try<AsymmetricCryptography> result;
                     StopWatch watch = StopWatch.watch("execute");
-                    if ( (result = watch.time(() -> arguments.getModeValue() == Mode.ENCRYPT
-                            ? doEncrypt(cryptography,istream)
-                            : doDecrypt(cryptography,istream))) ) {
-                        logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
-                    }
+                    result = watch.time(() -> arguments.getModeValue() == Mode.ENCRYPT
+                            ? tryEncrypt(cryptography, istream)
+                            : tryDecrypt(cryptography,istream));
+                    logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
                     return result;
                 })
-                .onFailure(s -> logger.error("Input/output file error -- does the file \"{}\" exist? ",fileInputPath))
+                .onFailure(s -> logger.error("Failed to process file \"{}\", error: {}",fileInputPath,s.getMessage()))
                 .fold(f -> false,f -> true);
     }
 
@@ -119,18 +118,14 @@ public class EnigmaMachine {
      * <p>
      * @param cryptography object required for encryption operation.
      * @param istream InputStream object, normally file based.
-     * @return true if encryption was successful.
+     * @return try object encapsulating success/failure of encryption.
      */
-    protected boolean doEncrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
+    protected Try<AsymmetricCryptography> tryEncrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
 
         return Try.of(() -> CertificateFactory.getInstance(PUBLIC_CERTIFICATE_TYPE))
                 .flatMap(factory -> Try.of(() -> factory.generateCertificate(new FileInputStream(arguments.getValue(ARG_CERTIFICATE)))))
-
-                .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream))
-                .onFailure(f -> logger.error("Failed to read encrypted file: {}", f.getMessage()))
-
-                .fold(f -> false, f -> true);
+                .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream));
     }
 
     /**
@@ -146,9 +141,9 @@ public class EnigmaMachine {
      * <p>
      * @param cryptography object required for encryption operation.
      * @param istream InputStream object, normally file based.
-     * @return true if encryption was successful.
+     * @return try object encapsulating success/failure of decryption.
      */
-    protected boolean doDecrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
+    protected Try<AsymmetricCryptography> tryDecrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
 
         return Try.of(() -> PrivateKeyStore.builder()
@@ -156,11 +151,7 @@ public class EnigmaMachine {
                         .storePassword(DEFAULT_KEYSTORE_PASSWORD)
                         .build())
                 .flatMap(this::tryPrivateKey)
-
-                .flatMap(key -> tryDecrypt(cryptography,key,istream))
-                .onFailure(f -> logger.error("Failed to decrypt file: {}",f.getMessage()))
-
-                .fold(f -> false, f -> true);
+                .flatMap(key -> tryDecrypt(cryptography,key,istream));
     }
 
     private File defaultOutputFile() {

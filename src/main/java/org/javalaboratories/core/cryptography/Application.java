@@ -14,6 +14,7 @@ public final class Application {
         if ( Arrays.stream(args).anyMatch(p-> p.contains("-h")) )
             arguments.printHelp(null);
         else {
+            int code = 1;
             ApplicationBuildInformation build = new ApplicationBuildInformation();
             logger.info("\nEnigma Machine v{}, build ({})",build.getVersion(), build.getTimestamp());
             logger.info("Java Laboratories, Kevin Henry (c) 2021\n");
@@ -21,10 +22,12 @@ public final class Application {
                     .onFailure(s -> logger.error("Syntax error: {}",s.getMessage()))
                     .fold(f -> false, f -> true) ) {
                 EnigmaMachine machine = new EnigmaMachine(arguments);
-                if (!machine.execute())
-                    System.exit(1);
-                logger.info("Completed successfully");
+                if (machine.execute()) {
+                    logger.info("Completed successfully");
+                    code = 0;
+                }
             }
+            System.exit(code);
         }
     }
 }
