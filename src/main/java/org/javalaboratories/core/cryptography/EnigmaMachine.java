@@ -95,18 +95,17 @@ public class EnigmaMachine {
      */
     public boolean execute() {
         AsymmetricCryptography cryptography = CryptographyFactory.getSunAsymmetricCryptography();
-        return Try.of(() -> new FileInputStream(fileInputPath.toFile()))
-                .flatMap(istream -> {
-                    Try<AsymmetricCryptography> result;
-                    StopWatch watch = StopWatch.watch("execute");
-                    result = watch.time(() -> arguments.getModeValue() == Mode.ENCRYPT
-                            ? tryEncrypt(cryptography,istream)
-                            : tryDecrypt(cryptography,istream));
-                    logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
-                    return result;
-                })
-                .onFailure(s -> logger.error("Failed to process file \"{}\", error: {}",fileInputPath,s.getMessage()))
-                .fold(f -> false,f -> true);
+        StopWatch watch = StopWatch.watch("execute");
+        boolean result = watch.time(() ->
+                Try.of(() -> new FileInputStream(fileInputPath.toFile()))
+                .flatMap(istream -> arguments.getModeValue() == Mode.ENCRYPT
+                        ? tryEncrypt(cryptography,istream)
+                        : tryDecrypt(cryptography,istream))
+                .onFailure(f -> logger.error("Failed to process file \"{}\", error: {}",fileInputPath,f.getMessage()))
+                .fold(f -> false,f -> true));
+        if (result)
+            logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
+        return result;
     }
 
     /**
