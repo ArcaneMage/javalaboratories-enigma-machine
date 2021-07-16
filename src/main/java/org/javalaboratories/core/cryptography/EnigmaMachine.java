@@ -100,7 +100,7 @@ public class EnigmaMachine {
                     Try<AsymmetricCryptography> result;
                     StopWatch watch = StopWatch.watch("execute");
                     result = watch.time(() -> arguments.getModeValue() == Mode.ENCRYPT
-                            ? tryEncrypt(cryptography, istream)
+                            ? tryEncrypt(cryptography,istream)
                             : tryDecrypt(cryptography,istream));
                     logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
                     return result;
