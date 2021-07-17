@@ -120,9 +120,9 @@
                         <phase>verify</phase>
                         <configuration>
                             <target name ="Creating software package for deployment">
-                                <copy file="${project.build.outputDirectory}/enigma-machine-template.sh" tofile="${project.basedir}/installable-artifacts/${project.artifactId}/bin/enigma-machine.sh"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="${project.basedir}/installable-artifacts/${project.artifactId}/lib"/>
-                                <mkdir dir="${project.basedir}/installable-artifacts/${project.artifactId}/config"/>
+                                <copy file="${project.build.outputDirectory}/enigma-machine-template.sh" tofile="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine.sh"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="${project.basedir}/software-artifacts/${project.artifactId}/lib"/>
+                                <mkdir dir="${project.basedir}/software-artifacts/${project.artifactId}/config"/>
                             </target>
                         </configuration>
                         <goals>

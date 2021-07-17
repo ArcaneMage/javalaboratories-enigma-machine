@@ -193,7 +193,7 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
 
     private Map<String,String> createDefaultValues() {
         String enigmaHome = System.getenv(HOME) == null ? "" : System.getenv(HOME);
-        String keyStoreDir = "".equals(enigmaHome) ? "" : enigmaHome+File.separator;
+        String keyStoreDir = "".equals(enigmaHome) ? "" : enigmaHome+File.separator+"config"+File.separator;
         Map<String,String> result = new HashMap<>();
         result.put("a", DEFAULT_KEYSTORE_ALIAS);
         result.put("v", keyStoreDir+DEFAULT_KEYSTORE_VAULT_FILE);

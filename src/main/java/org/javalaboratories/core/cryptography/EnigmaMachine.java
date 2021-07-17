@@ -109,25 +109,6 @@ public class EnigmaMachine {
     }
 
     /**
-     * Encrypts the {@code InputStream} using the {@code public certificate} and
-     * outputs the encrypted data to an output file.
-     * <p>
-     * If the output filename is unknown, the default name will be the {@code
-     * input file's} filename with the extension "._encrypted".
-     * <p>
-     * @param cryptography object required for encryption operation.
-     * @param istream InputStream object, normally file based.
-     * @return try object encapsulating success/failure of encryption.
-     */
-    protected Try<AsymmetricCryptography> tryEncrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
-        Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
-
-        return Try.of(() -> CertificateFactory.getInstance(PUBLIC_CERTIFICATE_TYPE))
-                .flatMap(factory -> Try.of(() -> factory.generateCertificate(new FileInputStream(arguments.getValue(ARG_CERTIFICATE)))))
-                .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream));
-    }
-
-    /**
      * Decrypts the {@code InputStream} using the {@code private key} and outputs
      * the decrypted data to a file.
      * <p>
@@ -146,11 +127,30 @@ public class EnigmaMachine {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
 
         return Try.of(() -> PrivateKeyStore.builder()
-                                .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
-                                .storePassword(DEFAULT_KEYSTORE_PASSWORD)
-                                .build())
+                            .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
+                            .storePassword(DEFAULT_KEYSTORE_PASSWORD)
+                            .build())
                 .flatMap(this::tryPrivateKey)
                 .flatMap(key -> tryDecrypt(cryptography,key,istream));
+    }
+
+    /**
+     * Encrypts the {@code InputStream} using the {@code public certificate} and
+     * outputs the encrypted data to an output file.
+     * <p>
+     * If the output filename is unknown, the default name will be the {@code
+     * input file's} filename with the extension "._encrypted".
+     * <p>
+     * @param cryptography object required for encryption operation.
+     * @param istream InputStream object, normally file based.
+     * @return try object encapsulating success/failure of encryption.
+     */
+    protected Try<AsymmetricCryptography> tryEncrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
+        Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
+
+        return Try.of(() -> CertificateFactory.getInstance(PUBLIC_CERTIFICATE_TYPE))
+                .flatMap(factory -> Try.of(() -> factory.generateCertificate(new FileInputStream(arguments.getValue(ARG_CERTIFICATE)))))
+                .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream));
     }
 
     private File defaultOutputFile() {
