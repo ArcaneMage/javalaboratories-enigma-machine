@@ -76,39 +76,30 @@
                     </dependency>
                 </dependencies>
             </plugin>
+
             <plugin>
-                <!-- Copy dependencies (jars) -->
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
+                <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>copy-dependencies</id>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
                         <goals>
-                            <goal>copy-dependencies</goal>
+                            <goal>single</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>
-                                ${project.build.directory}/lib
-                            </outputDirectory>
+                            <archive>
+                                <manifest>
+                                    <mainClass>
+                                        org.javalaboratories.core.cryptography.Application
+                                    </mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <!-- Build an executable JAR -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.javalaboratories.core.cryptography.Application</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
             </plugin>
 
             <plugin>
@@ -120,10 +111,11 @@
                         <phase>verify</phase>
                         <configuration>
                             <target name ="Creating software package for deployment">
-                                <copy file="${project.build.outputDirectory}/enigma-machine-template.sh" tofile="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine.sh"/>
-                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="${project.basedir}/software-artifacts/${project.artifactId}/lib"/>
+                                <copy file="${project.build.outputDirectory}/enigma-machine-template.sh" tofile="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar" tofile="${project.basedir}/software-artifacts/${project.artifactId}/lib/${project.build.finalName}.jar"/>
+
                                 <mkdir dir="${project.basedir}/software-artifacts/${project.artifactId}/config"/>
-                                <chmod file="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine.sh"  perm="750"/>
+                                <chmod file="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine"  perm="750"/>
                             </target>
                         </configuration>
                         <goals>
