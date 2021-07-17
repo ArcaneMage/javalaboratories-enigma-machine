@@ -123,6 +123,7 @@
                                 <copy file="${project.build.outputDirectory}/enigma-machine-template.sh" tofile="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine.sh"/>
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="${project.basedir}/software-artifacts/${project.artifactId}/lib"/>
                                 <mkdir dir="${project.basedir}/software-artifacts/${project.artifactId}/config"/>
+                                <chmod file="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine.sh"  perm="750"/>
                             </target>
                         </configuration>
                         <goals>

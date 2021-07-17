@@ -10,4 +10,4 @@ fi
 
 VM_OPTIONS=""
 JAVA_OPTS="-Xms192m -Xmx192m"
-java ${JAVA_OPTS} -jar ${VM_OPTIONS} ${HOME}/lib/${project.artifactId}-${project.version}.jar "$@"
+java ${JAVA_OPTS} -jar ${VM_OPTIONS} ${HOME}/lib/javalaboratories-enigma-machine-1.0-0-SNAPSHOT.jar "$@"
