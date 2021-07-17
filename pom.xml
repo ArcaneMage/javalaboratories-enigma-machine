@@ -48,7 +48,34 @@
         </dependency>
     </dependencies>
     <build>
+        <resources>
+            <resource>
+                <!-- Perform filtering on resources but exclude certificate (not filterable) -->
+                <filtering>true</filtering>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <filtering>true</filtering>
+                <directory>bash-scripts</directory>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.21.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-surefire-provider</artifactId>
+                        <version>1.2.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>5.2.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
             <plugin>
                 <!-- Copy dependencies (jars) -->
                 <groupId>org.apache.maven.plugins</groupId>
@@ -83,13 +110,27 @@
                     </archive>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <configuration>
+                            <target name ="Creating software package for deployment">
+                                <copy file="${project.build.outputDirectory}/enigma-machine-template.sh" tofile="${project.basedir}/installable-artifacts/${project.artifactId}/bin/enigma-machine.sh"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="${project.basedir}/installable-artifacts/${project.artifactId}/lib"/>
+                                <mkdir dir="${project.basedir}/installable-artifacts/${project.artifactId}/config"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
-        <resources>
-            <resource>
-                <!-- Perform filtering on resources but exclude certificate (not filterable) -->
-                <filtering>true</filtering>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
     </build>
 </project>
