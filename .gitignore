@@ -34,7 +34,7 @@ security-passwd.yml
 password-generator.txt
 
 # Built artifacts
-installable-artifacts/
+software-artifacts
 
 # certificates, keystore and encrypted files
 *.jks
