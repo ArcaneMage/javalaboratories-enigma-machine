@@ -64,8 +64,8 @@ extracting the public certificate is straight forward:
 ```
 keytool -rfc -v -exportcert -alias javalaboratories-org -file javalaboratories-org.cer -keystore keys-vault.jks
 ```
-This file can be issued to anybody for encryption purposes, but **DO NOT** inform them the `private key` password. Copy
-the `keys-vault.jks` file to the `config` directory in the installation, ie: `$HOME/opt/javalaboratories-enigma-machine/config`. 
+This file can be issued to anybody for encryption purposes, but **DO NOT** inform them the `private key` password. Next 
+step is to copy the `keys-vault.jks` file to the `config` directory in the installation, ie: `$HOME/opt/javalaboratories-enigma-machine/config`. 
 The final step in this configuration is the environment variable `EM_HOME` to be set in the operating system's user profile:
 ```
 # ENIGMA MACHINE
