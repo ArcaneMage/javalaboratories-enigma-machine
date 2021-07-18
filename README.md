@@ -72,3 +72,34 @@ The final step in this configuration is the environment variable `EM_HOME` to be
 export EM_HOME=~/opt/javalaboratories-enigma-machine
 PATH=$PATH:$EM_HOME/bin
 ```
+### Usage
+```
+// Encryption
+enigma-machine -c=javalaboratories-org.cer -f=<file> -e
+
+// Decryption
+enigma-machine -p=<private-key-password> -f=<encrypted-file> -d 
+```
+For complete help on usage, use the `-h` switch for details.
+```
+usage: enigma-machine [--encrypt --certificate=<arg>] | [--decrypt --private-key-password=<arg>]
+                      [--output-file=<arg>] -file=<arg>
+ -a,--private-key-alias <arg>      Private keys alias, default name "private-key-alias"
+ -c,--certificate <arg>            Public certificate file
+ -d,--decrypt                      Decrypt file
+ -e,--encrypt                      Encrypt file
+ -f,--file <arg>                   File to encrypt/decrypt
+ -h                                Help
+ -o,--output-file <arg>            Output filepath, default name is "<file>._encrypted" |
+                                   "<file>._decrypted", depending on mode
+ -p,--private-key-password <arg>   Private keys password
+ -v,--vault <arg>                  Private keys vault, default name "keys-vault.jks"
+```
+
+## License
+Licensed under the Apache License, Version 2.0 (the "License")
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an 
+"AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language 
+governing permissions and limitations under the License.
