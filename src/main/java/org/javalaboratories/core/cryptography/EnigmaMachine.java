@@ -125,7 +125,6 @@ public class EnigmaMachine {
      */
     protected Try<AsymmetricCryptography> tryDecrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
-
         return Try.of(() -> PrivateKeyStore.builder()
                             .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
                             .storePassword(DEFAULT_KEYSTORE_PASSWORD)
@@ -147,7 +146,6 @@ public class EnigmaMachine {
      */
     protected Try<AsymmetricCryptography> tryEncrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
-
         return Try.of(() -> CertificateFactory.getInstance(PUBLIC_CERTIFICATE_TYPE))
                 .flatMap(factory -> Try.of(() -> factory.generateCertificate(new FileInputStream(arguments.getValue(ARG_CERTIFICATE)))))
                 .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream));
