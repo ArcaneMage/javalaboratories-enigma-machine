@@ -111,6 +111,8 @@
                         <phase>verify</phase>
                         <configuration>
                             <target name ="Creating software package for deployment">
+                                <delete dir="${project.basedir}/software-artifacts"/>
+
                                 <copy file="${project.build.outputDirectory}/enigma-machine-template.sh" tofile="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine"/>
                                 <copy file="${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar" tofile="${project.basedir}/software-artifacts/${project.artifactId}/lib/${project.build.finalName}.jar"/>
 

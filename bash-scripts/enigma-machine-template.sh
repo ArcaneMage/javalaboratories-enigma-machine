@@ -1,4 +1,5 @@
 #!/bin/bash
+ARGUMENTS=$@
 set echo off
 
 if [[ -z "${EM_HOME}" ]]; then
@@ -10,4 +11,4 @@ fi
 
 VM_OPTIONS=""
 JAVA_OPTS="-Xms192m -Xmx192m"
-java ${JAVA_OPTS} ${VM_OPTIONS} -jar ${HOME}/lib/${project.artifactId}-${project.version}.jar "$@"
+exec java ${JAVA_OPTS} ${VM_OPTIONS} -jar ${HOME}/lib/${project.artifactId}-${project.version}.jar $ARGUMENTS
