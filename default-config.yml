@@ -1,0 +1,12 @@
+---
+#
+# Defaults to use if absent from command-line arguments.
+#
+defaults:
+  keyStore:
+    # Parameter -a default
+    private-key-alias: javalaboratories-org
+
+    # Parameter -v default
+    file: keys-vault.jks
+...

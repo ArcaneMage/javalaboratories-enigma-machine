@@ -10,7 +10,7 @@ public final class Application {
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) {
-        CommandLineArguments arguments = new DefaultCommandLineArguments();
+        CommandLineArguments arguments = new DefaultCommandLineArguments(new Configuration());
         if ( Arrays.stream(args).anyMatch(p-> p.contains("-h")) )
             arguments.printHelp(null);
         else {

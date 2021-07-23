@@ -1,9 +1,9 @@
 package org.javalaboratories.core.cryptography;
 
 import org.apache.commons.cli.*;
+import org.javalaboratories.core.Eval;
 import org.javalaboratories.core.Try;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,26 +23,25 @@ import java.util.Objects;
  */
 public class DefaultCommandLineArguments implements CommandLineArguments {
 
-    private static final String DEFAULT_KEYSTORE_ALIAS = "javalaboratories-org";
-    private static final String DEFAULT_KEYSTORE_VAULT_FILE = "keys-vault.jks";
-    private static final String HOME = "EM_HOME";
-
     private static final String COMMAND_SYNTAX = "enigma-machine [--encrypt --certificate=<arg>] | " +
             "[--decrypt --private-key-password=<arg>] [--output-file=<arg>] -file=<arg>";
 
     private Mode mode;
     private CommandLine commandLine;
     private final Options options;
-    private final Map<String,String> defaultValues;
+    private final Eval<Map<String,String>> defaultValues;
     private boolean initialised;
+    private final Configuration configuration;
 
     /**
-     * Default constructor
+     * Constructor
      */
-    public DefaultCommandLineArguments() {
-        defaultValues = createDefaultValues();
+    public DefaultCommandLineArguments(Configuration c) {
+        Objects.requireNonNull(c);
+        defaultValues = Eval.later(this::createDefaultValues);
         options = createOptions();
         initialised = false;
+        this.configuration = c;
     }
 
     /**
@@ -90,7 +89,9 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
         String value = commandLine.getOptionValue(option);
         // Check whether it's defaulted
         if (value == null)
-            value = defaultValues.get(option);
+            value = defaultValues
+                    .get()
+                    .get(option);
         return value;
     }
 
@@ -192,11 +193,10 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
     }
 
     private Map<String,String> createDefaultValues() {
-        String enigmaHome = System.getenv(HOME) == null ? "" : System.getenv(HOME);
-        String keyStoreDir = "".equals(enigmaHome) ? "" : enigmaHome+File.separator+"config"+File.separator;
+        String keyStoreDir = configuration.getConfigDirectory();
         Map<String,String> result = new HashMap<>();
-        result.put("a", DEFAULT_KEYSTORE_ALIAS);
-        result.put("v", keyStoreDir+DEFAULT_KEYSTORE_VAULT_FILE);
+        result.put("a", configuration.getDefaults().getKeyStore().getPrivateKeyAlias());
+        result.put("v", keyStoreDir+configuration.getDefaults().getKeyStore().getFile());
         return result;
     }
 

@@ -6,16 +6,17 @@
 
     <groupId>org.example</groupId>
     <artifactId>javalaboratories-enigma-machine</artifactId>
-    <version>1.0-0-SNAPSHOT</version>
+    <version>1.0-1-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <javalaboratories.version>1.1.9-RELEASE</javalaboratories.version>
+        <javalaboratories.version>1.1.9.1-RELEASE</javalaboratories.version>
         <logback-version>1.2.3</logback-version>
         <junit-version>5.5.2</junit-version>
         <commons-cli-version>1.4</commons-cli-version>
         <lombok-version>1.18.16</lombok-version>
+        <yaml-version>1.29</yaml-version>
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
     </properties>
@@ -41,6 +42,11 @@
             <version>${commons-cli-version}</version>
         </dependency>
         <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${yaml-version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>${junit-version}</version>
@@ -63,6 +69,11 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.21.0</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <TEST_MODE>true</TEST_MODE>
+                    </systemPropertyVariables>
+                </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>org.junit.platform</groupId>
@@ -115,6 +126,8 @@
                                 <copy file="${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar" tofile="${project.basedir}/software-artifacts/${project.artifactId}/lib/${project.build.finalName}.jar"/>
 
                                 <mkdir dir="${project.basedir}/software-artifacts/${project.artifactId}/config"/>
+                                <copy file="${project.build.directory}/default-config.yml" tofile="${project.basedir}/software-artifacts/config/default-config.yml"/>
+
                                 <chmod file="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine"  perm="750"/>
 
                                 <zip destfile="${project.basedir}/${project.artifactId}.zip" basedir="${project.basedir}/software-artifacts"/>

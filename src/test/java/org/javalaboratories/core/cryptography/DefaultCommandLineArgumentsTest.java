@@ -14,7 +14,7 @@ public class DefaultCommandLineArgumentsTest {
 
     @BeforeEach
     public void setup() {
-        arguments = new DefaultCommandLineArguments();
+        arguments = new DefaultCommandLineArguments(new Configuration());
     }
 
     @Test
