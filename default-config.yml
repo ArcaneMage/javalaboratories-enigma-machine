@@ -1,6 +1,6 @@
 ---
 #
-# Defaults to use if absent from command-line arguments.
+# Default arguments to use if absent from command-line.
 #
 defaults:
   keyStore:

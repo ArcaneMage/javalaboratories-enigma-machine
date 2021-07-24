@@ -126,7 +126,7 @@
                                 <copy file="${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar" tofile="${project.basedir}/software-artifacts/${project.artifactId}/lib/${project.build.finalName}.jar"/>
 
                                 <mkdir dir="${project.basedir}/software-artifacts/${project.artifactId}/config"/>
-                                <copy file="${project.build.directory}/default-config.yml" tofile="${project.basedir}/software-artifacts/config/default-config.yml"/>
+                                <copy file="${project.basedir}/default-config.yml" tofile="${project.basedir}/software-artifacts/${project.artifactId}/config/default-config.yml"/>
 
                                 <chmod file="${project.basedir}/software-artifacts/${project.artifactId}/bin/enigma-machine"  perm="750"/>
 
