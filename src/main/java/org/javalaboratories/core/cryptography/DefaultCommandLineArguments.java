@@ -186,7 +186,7 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
                 .addOption(Option.builder(ARG_OUTPUT_FILE)
                     .longOpt(LONG_ARG_OUTPUT_FILE)
                     .hasArg(true)
-                    .desc("Output filepath, default name is \"<file>._encrypted\" | \"<file>._decrypted\", depending on mode")
+                    .desc("Output filepath, default name is \"<file>.enc\" | \"<file>.dcr\", depending on mode")
                     .optionalArg(false)
                     .build());
         return result;

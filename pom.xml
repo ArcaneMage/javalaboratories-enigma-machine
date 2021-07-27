@@ -11,7 +11,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <javalaboratories.version>1.1.9.1-RELEASE</javalaboratories.version>
+        <javalaboratories.version>1.1.9.3-RELEASE</javalaboratories.version>
         <logback-version>1.2.3</logback-version>
         <junit-version>5.5.2</junit-version>
         <commons-cli-version>1.4</commons-cli-version>

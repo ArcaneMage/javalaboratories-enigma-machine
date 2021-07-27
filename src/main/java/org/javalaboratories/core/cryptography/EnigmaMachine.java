@@ -2,6 +2,7 @@ package org.javalaboratories.core.cryptography;
 
 import org.javalaboratories.core.Maybe;
 import org.javalaboratories.core.Try;
+import org.javalaboratories.core.cryptography.keys.KeyFileFormatter;
 import org.javalaboratories.core.cryptography.keys.PrivateKeyStore;
 import org.javalaboratories.core.handlers.Handlers;
 import org.javalaboratories.core.util.Arguments;
@@ -54,9 +55,12 @@ public class EnigmaMachine {
     private static final Logger logger = LoggerFactory.getLogger(EnigmaMachine.class);
 
     private static final String PUBLIC_CERTIFICATE_TYPE = "X.509";
-    private static final String DEFAULT_ENCRYPTED_FILE_EXTENSION = "._encrypted";
-    private static final String DEFAULT_DECRYPTED_FILE_EXTENSION = "._decrypted";
+    private static final String DEFAULT_ENCRYPTED_FILE_EXTENSION = ".enc";
+    private static final String DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION = ".key";
+    private static final String DEFAULT_DECRYPTED_FILE_EXTENSION = ".dcr";
     private static final String DEFAULT_KEYSTORE_PASSWORD = "changeit";
+    private static final String KEY_DUMP_BEGIN_HEADER = "Begin AES Secret-Key, RSA Encrypted";
+    private static final String KEY_DUMP_END_HEADER = "End AES Secret-Key, RSA Encrypted";
 
     private final CommandLineArguments arguments;
     private final Path fileInputPath;
@@ -153,7 +157,14 @@ public class EnigmaMachine {
 
     private File defaultOutputFile() {
         String ext = arguments.getModeValue() == Mode.ENCRYPT ? DEFAULT_ENCRYPTED_FILE_EXTENSION : DEFAULT_DECRYPTED_FILE_EXTENSION;
-        return Paths.get(".", fileInputPath.getFileName().toString() + ext).toFile();
+        return Paths.get(".", truncateExt(fileInputPath).toString() + ext).toFile();
+    }
+
+    private InputStream getInputKeyFileStream() {
+        Path path = defaultOutputFile().toPath();
+        String keyFilename = truncateExt(path).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
+        return Try.of(() -> new FileInputStream(keyFilename))
+                .orElseThrow(() -> new CryptographyException("Requires read/access to secret-key file"));
     }
 
     private OutputStream getOutputFileStream() {
@@ -163,10 +174,24 @@ public class EnigmaMachine {
                 .orElseGet(Handlers.supplier(() -> new FileOutputStream(defaultOutputFile())));
     }
 
+    private OutputStream getOutputKeyFileStream() {
+        Path path = defaultOutputFile().toPath();
+        String keyFilename = truncateExt(path).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
+        return Try.of(() -> new FileOutputStream(keyFilename))
+                .orElseThrow(() -> new CryptographyException("Failed to create secret-key file"));
+    }
+
+    private Path truncateExt(Path path) {
+        String s = path.toString();
+        if (s.lastIndexOf(".") > 1) return Paths.get(s.substring(0,s.lastIndexOf(".")));
+        else  return path;
+    }
+
     private Try<AsymmetricCryptography> tryDecrypt(AsymmetricCryptography cryptography, PrivateKey privateKey, InputStream istream) {
         return Try.of (() -> {
             OutputStream ostream = getOutputFileStream();
-            cryptography.decrypt(privateKey,istream,ostream);
+            EncryptedAesKey key = new EncryptedAesKey(KeyFileFormatter.from(getInputKeyFileStream()).getKey());
+            cryptography.decrypt(privateKey,key,istream,ostream);
             return cryptography;
         });
     }
@@ -174,7 +199,10 @@ public class EnigmaMachine {
     private Try<AsymmetricCryptography> tryEncrypt(AsymmetricCryptography cryptography, Certificate cert,InputStream istream) {
         return Try.of(() -> {
             OutputStream ostream = getOutputFileStream();
-            cryptography.encrypt(cert, istream, ostream);
+            OutputStream kstream = getOutputKeyFileStream();
+            EncryptedAesKey key = cryptography.encrypt(cert, istream, ostream);
+            KeyFileFormatter format = new KeyFileFormatter(key.getKey(),false, KEY_DUMP_BEGIN_HEADER, KEY_DUMP_END_HEADER);
+            format.write(kstream);
             return cryptography;
         });
     }

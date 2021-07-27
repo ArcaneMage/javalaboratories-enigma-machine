@@ -41,6 +41,8 @@ software-artifacts
 *.txt
 *._encrypted
 *._decrypted
+*.enc
 *.cer
 *.pem
 *.out
+*.key
