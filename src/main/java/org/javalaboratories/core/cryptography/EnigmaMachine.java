@@ -1,16 +1,13 @@
 package org.javalaboratories.core.cryptography;
 
-import org.javalaboratories.core.Maybe;
 import org.javalaboratories.core.Try;
 import org.javalaboratories.core.cryptography.keys.KeyFileFormatter;
 import org.javalaboratories.core.cryptography.keys.PrivateKeyStore;
-import org.javalaboratories.core.handlers.Handlers;
 import org.javalaboratories.core.util.Arguments;
 import org.javalaboratories.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -80,7 +77,7 @@ public class EnigmaMachine {
         this.arguments = arguments;
         fileInputPath = Paths.get(arguments.getValue(ARG_INPUT_FILE));
         String ofile = arguments.getValue(ARG_OUTPUT_FILE);
-        fileOutputPath = ofile == null ? null : Paths.get(ofile);
+        fileOutputPath = ofile == null ? getDefaultOutputPath() : Paths.get(ofile); // default to <file>.enc | <file>.dcr
         keyStoreFilePath = Paths.get(arguments.getValue(ARG_KEYS_VAULT)); // already defaulted
         this.privateKeyAlias = arguments.getValue(ARG_PRIVATE_KEYS_ALIAS); // already defaulted
     }
@@ -155,28 +152,19 @@ public class EnigmaMachine {
                 .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream));
     }
 
-    private File defaultOutputFile() {
+    private Path getDefaultOutputPath() {
         String ext = arguments.getModeValue() == Mode.ENCRYPT ? DEFAULT_ENCRYPTED_FILE_EXTENSION : DEFAULT_DECRYPTED_FILE_EXTENSION;
-        return Paths.get(".", truncateExt(fileInputPath).toString() + ext).toFile();
+        return Paths.get(".", truncateExt(fileInputPath).toString() + ext);
     }
 
-    private InputStream getInputKeyFileStream() {
-        Path path = defaultOutputFile().toPath();
-        String keyFilename = truncateExt(path).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
+    private InputStream getKeyFileInputStream() {
+        String keyFilename = truncateExt(fileInputPath).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
         return Try.of(() -> new FileInputStream(keyFilename))
                 .orElseThrow(() -> new CryptographyException("Requires read/access to secret-key file"));
     }
 
-    private OutputStream getOutputFileStream() {
-        return Maybe.ofNullable(fileOutputPath)
-                .map(Path::toFile)
-                .map(Handlers.function(FileOutputStream::new))
-                .orElseGet(Handlers.supplier(() -> new FileOutputStream(defaultOutputFile())));
-    }
-
-    private OutputStream getOutputKeyFileStream() {
-        Path path = defaultOutputFile().toPath();
-        String keyFilename = truncateExt(path).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
+    private OutputStream getKeyFileOutputStream() {
+        String keyFilename = truncateExt(fileOutputPath).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
         return Try.of(() -> new FileOutputStream(keyFilename))
                 .orElseThrow(() -> new CryptographyException("Failed to create secret-key file"));
     }
@@ -189,8 +177,8 @@ public class EnigmaMachine {
 
     private Try<AsymmetricCryptography> tryDecrypt(AsymmetricCryptography cryptography, PrivateKey privateKey, InputStream istream) {
         return Try.of (() -> {
-            OutputStream ostream = getOutputFileStream();
-            EncryptedAesKey key = new EncryptedAesKey(KeyFileFormatter.from(getInputKeyFileStream()).getKey());
+            OutputStream ostream = new FileOutputStream(fileOutputPath.toFile());
+            EncryptedAesKey key = new EncryptedAesKey(KeyFileFormatter.from(getKeyFileInputStream()).getKey());
             cryptography.decrypt(privateKey,key,istream,ostream);
             return cryptography;
         });
@@ -198,8 +186,8 @@ public class EnigmaMachine {
 
     private Try<AsymmetricCryptography> tryEncrypt(AsymmetricCryptography cryptography, Certificate cert,InputStream istream) {
         return Try.of(() -> {
-            OutputStream ostream = getOutputFileStream();
-            OutputStream kstream = getOutputKeyFileStream();
+            OutputStream ostream = new FileOutputStream(fileOutputPath.toFile());
+            OutputStream kstream = getKeyFileOutputStream();
             EncryptedAesKey key = cryptography.encrypt(cert, istream, ostream);
             KeyFileFormatter format = new KeyFileFormatter(key.getKey(),false, KEY_FILE_BEGIN_HEADER, KEY_FILE_END_HEADER);
             format.write(kstream);
