@@ -76,10 +76,10 @@ public class EnigmaMachine {
         Objects.requireNonNull(arguments);
         this.arguments = arguments;
         fileInputPath = Paths.get(arguments.getValue(ARG_INPUT_FILE));
-        String ofile = arguments.getValue(ARG_OUTPUT_FILE);
-        fileOutputPath = ofile == null ? getDefaultOutputPath() : Paths.get(ofile); // default to <file>.enc | <file>.dcr
+        String fop = arguments.getValue(ARG_OUTPUT_FILE);
+        fileOutputPath = fop == null ? getFileOutputPath() : Paths.get(fop); // default to <file>.enc | <file>.dcr
         keyStoreFilePath = Paths.get(arguments.getValue(ARG_KEYS_VAULT)); // already defaulted
-        this.privateKeyAlias = arguments.getValue(ARG_PRIVATE_KEYS_ALIAS); // already defaulted
+        privateKeyAlias = arguments.getValue(ARG_PRIVATE_KEYS_ALIAS); // already defaulted
     }
 
     /**
@@ -152,27 +152,21 @@ public class EnigmaMachine {
                 .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream));
     }
 
-    private Path getDefaultOutputPath() {
+    private Path getFileOutputPath() {
         String ext = arguments.getModeValue() == Mode.ENCRYPT ? DEFAULT_ENCRYPTED_FILE_EXTENSION : DEFAULT_DECRYPTED_FILE_EXTENSION;
-        return Paths.get(".", truncateExt(fileInputPath).toString() + ext);
+        return Paths.get(".", PathUtils.truncateFileExt(fileInputPath).toString() + ext);
     }
 
     private InputStream getKeyFileInputStream() {
-        String keyFilename = truncateExt(fileInputPath).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
+        String keyFilename =  PathUtils.truncateFileExt(fileInputPath).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
         return Try.of(() -> new FileInputStream(keyFilename))
                 .orElseThrow(() -> new CryptographyException("Requires read/access to secret-key file"));
     }
 
     private OutputStream getKeyFileOutputStream() {
-        String keyFilename = truncateExt(fileOutputPath).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
+        String keyFilename =  PathUtils.truncateFileExt(fileOutputPath).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
         return Try.of(() -> new FileOutputStream(keyFilename))
                 .orElseThrow(() -> new CryptographyException("Failed to create secret-key file"));
-    }
-
-    private Path truncateExt(Path path) {
-        String s = path.toString();
-        if (s.lastIndexOf(".") > 1) return Paths.get(s.substring(0,s.lastIndexOf(".")));
-        else  return path;
     }
 
     private Try<AsymmetricCryptography> tryDecrypt(AsymmetricCryptography cryptography, PrivateKey privateKey, InputStream istream) {
