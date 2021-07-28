@@ -59,8 +59,8 @@ public class EnigmaMachine {
     private static final String DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION = ".key";
     private static final String DEFAULT_DECRYPTED_FILE_EXTENSION = ".dcr";
     private static final String DEFAULT_KEYSTORE_PASSWORD = "changeit";
-    private static final String KEY_DUMP_BEGIN_HEADER = "Begin AES Secret-Key, RSA Encrypted";
-    private static final String KEY_DUMP_END_HEADER = "End AES Secret-Key, RSA Encrypted";
+    private static final String KEY_FILE_BEGIN_HEADER = "Begin AES Secret-Key, RSA Encrypted";
+    private static final String KEY_FILE_END_HEADER = "End AES Secret-Key, RSA Encrypted";
 
     private final CommandLineArguments arguments;
     private final Path fileInputPath;
@@ -117,7 +117,7 @@ public class EnigmaMachine {
      * the decrypted data to a file.
      * <p>
      * If the output filename is unknown, the default name will be the {@code input
-     * file's} filename with the extension "._decrypted". Decryption does require a
+     * file's} filename with the extension ".dcr". Decryption does require a
      * private key and this is retrieved from the default {@code keys-vault.jks}
      * file (overridable with the -v switch). Unless otherwise specified it is
      * assumed the private key is stored in the default {@code javalaboratories-org}
@@ -142,7 +142,7 @@ public class EnigmaMachine {
      * outputs the encrypted data to an output file.
      * <p>
      * If the output filename is unknown, the default name will be the {@code
-     * input file's} filename with the extension "._encrypted".
+     * input file's} filename with the extension ".enc".
      * <p>
      * @param cryptography object required for encryption operation.
      * @param istream InputStream object, normally file based.
@@ -201,7 +201,7 @@ public class EnigmaMachine {
             OutputStream ostream = getOutputFileStream();
             OutputStream kstream = getOutputKeyFileStream();
             EncryptedAesKey key = cryptography.encrypt(cert, istream, ostream);
-            KeyFileFormatter format = new KeyFileFormatter(key.getKey(),false, KEY_DUMP_BEGIN_HEADER, KEY_DUMP_END_HEADER);
+            KeyFileFormatter format = new KeyFileFormatter(key.getKey(),false, KEY_FILE_BEGIN_HEADER, KEY_FILE_END_HEADER);
             format.write(kstream);
             return cryptography;
         });
