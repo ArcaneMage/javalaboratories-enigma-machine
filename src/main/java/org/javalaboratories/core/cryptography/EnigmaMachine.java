@@ -169,7 +169,8 @@ public class EnigmaMachine {
                 .orElseThrow(() -> new CryptographyException("Failed to create secret-key file"));
     }
 
-    private Try<AsymmetricCryptography> tryDecrypt(AsymmetricCryptography cryptography, PrivateKey privateKey, InputStream istream) {
+    private Try<AsymmetricCryptography> tryDecrypt(final AsymmetricCryptography cryptography, final PrivateKey privateKey,
+                                                   final InputStream istream) {
         return Try.of (() -> {
             OutputStream ostream = new FileOutputStream(fileOutputPath.toFile());
             EncryptedAesKey key = new EncryptedAesKey(KeyFileFormatter.from(getKeyFileInputStream()).getKey());
@@ -178,7 +179,8 @@ public class EnigmaMachine {
         });
     }
 
-    private Try<AsymmetricCryptography> tryEncrypt(AsymmetricCryptography cryptography, Certificate cert,InputStream istream) {
+    private Try<AsymmetricCryptography> tryEncrypt(final AsymmetricCryptography cryptography, final Certificate cert,
+                                                   final InputStream istream) {
         return Try.of(() -> {
             OutputStream ostream = new FileOutputStream(fileOutputPath.toFile());
             OutputStream kstream = getKeyFileOutputStream();
@@ -189,7 +191,7 @@ public class EnigmaMachine {
         });
     }
 
-    private Try<PrivateKey> tryPrivateKey(PrivateKeyStore store) {
+    private Try<PrivateKey> tryPrivateKey(final PrivateKeyStore store) {
         PrivateKey key;
         try {
             key = store.getKey(privateKeyAlias, arguments.getValue(ARG_PRIVATE_KEYS_PASSWORD))
