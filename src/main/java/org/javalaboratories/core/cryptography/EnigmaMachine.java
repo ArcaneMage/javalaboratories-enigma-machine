@@ -20,13 +20,7 @@ import java.security.cert.CertificateFactory;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_CERTIFICATE;
-import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_INPUT_FILE;
-import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_KEYS_VAULT;
-import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_OUTPUT_FILE;
-import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_PRIVATE_KEYS_ALIAS;
-import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_PRIVATE_KEYS_PASSWORD;
-import static org.javalaboratories.core.cryptography.CommandLineArguments.Mode;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.*;
 
 /**
  * Enigma Machine is an asymmetric cryptographic class that has the ability to
@@ -64,6 +58,7 @@ public class EnigmaMachine {
     private final Path fileOutputPath;
     private final Path keyStoreFilePath;
     private final String privateKeyAlias;
+    private final String keyStorePassword;
 
     /**
      * Constructs an instance of this class with the {@link CommandLineArguments}
@@ -79,6 +74,8 @@ public class EnigmaMachine {
         String fop = arguments.getValue(ARG_OUTPUT_FILE);
         fileOutputPath = fop == null ? getFileOutputPath() : Paths.get(fop); // default to <file>.enc | <file>.dcr
         keyStoreFilePath = Paths.get(arguments.getValue(ARG_KEYS_VAULT)); // already defaulted
+        String ksPassword = arguments.getValue(ARG_KEYSTORE_PASSWORD);
+        keyStorePassword = ksPassword == null ? DEFAULT_KEYSTORE_PASSWORD : ksPassword; // already defaulted
         privateKeyAlias = arguments.getValue(ARG_PRIVATE_KEYS_ALIAS); // already defaulted
     }
 
@@ -128,7 +125,7 @@ public class EnigmaMachine {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
         return Try.of(() -> PrivateKeyStore.builder()
                             .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
-                            .storePassword(DEFAULT_KEYSTORE_PASSWORD)
+                            .storePassword(keyStorePassword)
                             .build())
                 .flatMap(this::tryPrivateKey)
                 .flatMap(key -> tryDecrypt(cryptography,key,istream));

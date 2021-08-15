@@ -42,7 +42,7 @@ public class DefaultCommandLineArgumentsTest {
 
     @Test
     public void testParse_AllowableEncryptArguments_Fail() {
-        String[] args = toArgs("-c=javalaboratories-org.cer -f=secret-text.txt -e -a=private-key-alias -p=65537773 -v=private-vault.jks");
+        String[] args = toArgs("-c=javalaboratories-org.cer -f=secret-text.txt -e -a=private-key-alias -p=65537773 -v=private-vault.jks -k=changeit");
         boolean result = arguments.parse(args)
                 .fold(f -> false, f -> true);
         assertFalse(result);

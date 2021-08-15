@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class KeyStore {
+    String password;
     String privateKeyAlias;
     String file;
 }

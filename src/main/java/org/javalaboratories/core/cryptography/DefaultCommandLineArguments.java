@@ -120,8 +120,8 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
             if (!(commandLine.hasOption(ARG_CERTIFICATE) && commandLine.hasOption(ARG_INPUT_FILE)))
                 throw new IllegalArgumentException("Requires public certificate and a file to encrypt: -c -f");
             // Not allowable in encryption mode
-            if (hasAnyOption(ARG_PRIVATE_KEYS_ALIAS,ARG_PRIVATE_KEYS_PASSWORD,ARG_KEYS_VAULT)) {
-                throw new IllegalArgumentException("Arguments (-a,-p,-v) not allowable in encryption mode");
+            if (hasAnyOption(ARG_PRIVATE_KEYS_ALIAS,ARG_KEYSTORE_PASSWORD,ARG_PRIVATE_KEYS_PASSWORD,ARG_KEYS_VAULT)) {
+                throw new IllegalArgumentException("Arguments (-a,-k,-p,-v) not allowable in encryption mode");
             }
         } else {
             if (commandLine.hasOption(ARG_DECRYPT)) {
@@ -150,6 +150,12 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
                     .longOpt(LONG_ARG_PRIVATE_KEYS_PASSWORD)
                     .hasArg()
                     .desc("Private keys password")
+                    .optionalArg(false)
+                    .build())
+                .addOption(Option.builder(ARG_KEYSTORE_PASSWORD)
+                    .longOpt(LONG_ARG_KEYSTORE_PASSWORD)
+                    .hasArg()
+                    .desc("Keystore password")
                     .optionalArg(false)
                     .build())
                 .addOption(Option.builder(ARG_CERTIFICATE)
@@ -196,6 +202,7 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
         String keyStoreDir = configuration.getConfigDirectory();
         Map<String,String> result = new HashMap<>();
         result.put("a", configuration.getDefaults().getKeyStore().getPrivateKeyAlias());
+        result.put("k", configuration.getDefaults().getKeyStore().getPassword());
         result.put("v", keyStoreDir+configuration.getDefaults().getKeyStore().getFile());
         return result;
     }

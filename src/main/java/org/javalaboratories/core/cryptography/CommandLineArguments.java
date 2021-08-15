@@ -23,6 +23,7 @@ public interface CommandLineArguments {
     String ARG_ENCRYPT = "e";
     String ARG_INPUT_FILE = "f";
     String ARG_HELP = "h";
+    String ARG_KEYSTORE_PASSWORD = "k";
     String ARG_OUTPUT_FILE = "o";
     String ARG_PRIVATE_KEYS_PASSWORD = "p";
     String ARG_KEYS_VAULT = "v";
@@ -32,6 +33,7 @@ public interface CommandLineArguments {
     String LONG_ARG_DECRYPT = "decrypt";
     String LONG_ARG_ENCRYPT = "encrypt";
     String LONG_ARG_INPUT_FILE = "file";
+    String LONG_ARG_KEYSTORE_PASSWORD = "keystore-password";
     String LONG_ARG_OUTPUT_FILE = "output-file";
     String LONG_ARG_PRIVATE_KEYS_PASSWORD = "private-key-password";
     String LONG_ARG_KEYS_VAULT = "vault";

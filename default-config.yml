@@ -4,6 +4,9 @@
 #
 defaults:
   keyStore:
+    # Keystore password -k default
+    password: changeit
+
     # Parameter -a default
     private-key-alias: javalaboratories-org
 
