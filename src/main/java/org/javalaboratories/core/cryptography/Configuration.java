@@ -4,6 +4,7 @@ import org.javalaboratories.core.Eval;
 import org.javalaboratories.core.Try;
 import org.javalaboratories.core.cryptography.model.yaml.DefaultConfig;
 import org.javalaboratories.core.cryptography.model.yaml.Defaults;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.introspector.Property;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public final class Configuration {
 
     private static final String CONFIGURATION_FILE="default-config.yml";
+    private static final LoaderOptions DEFAULT_LOADER_OPTIONS = new LoaderOptions();
     private static final String HOME = "EM_HOME";
 
     // If in test mode, assume config directory in current directory.
@@ -58,7 +60,7 @@ public final class Configuration {
     }
 
     private Yaml newYaml() {
-        Constructor c = new Constructor(DefaultConfig.class);
+        Constructor c = new Constructor(DefaultConfig.class, DEFAULT_LOADER_OPTIONS);
         c.setPropertyUtils(new PropertyUtils() {
             @Override
             public Property getProperty(Class<? extends Object> type, String name) {

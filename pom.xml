@@ -6,17 +6,17 @@
 
     <groupId>org.example</groupId>
     <artifactId>javalaboratories-enigma-machine</artifactId>
-    <version>1.0-1-SNAPSHOT</version>
+    <version>2.0-1-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <javalaboratories.version>1.1.9.3-RELEASE</javalaboratories.version>
-        <logback-version>1.2.3</logback-version>
+        <logback-version>1.4.14</logback-version>
         <junit-version>5.5.2</junit-version>
         <commons-cli-version>1.4</commons-cli-version>
-        <lombok-version>1.18.16</lombok-version>
-        <yaml-version>1.29</yaml-version>
+        <lombok-version>1.18.30</lombok-version>
+        <yaml-version>2.2</yaml-version>
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
     </properties>
