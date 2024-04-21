@@ -19,14 +19,14 @@ public class DefaultCommandLineArgumentsTest {
 
     @Test
     public void testParse_MinimumDecryptArguments_Pass() {
-        String[] args = toArgs("-p=6553772 -f=secret-text.txt._encrypted -d");
+        String[] args = toArgs("-p=private-key.key -f=secret-text.txt._encrypted -d");
         arguments.parse(args);
-        assertEquals("6553772",arguments.getValue("p"));
+        assertEquals("private-key.key",arguments.getValue("p"));
     }
 
     @Test
     public void testParse_AllowableDecryptArguments_Fail() {
-        String[] args = toArgs("-p=6553772 -f=secret-text.txt._encrypted -d -c=javalaboratories-org.cer");
+        String[] args = toArgs("-p=private-key.key -f=secret-text.txt._encrypted -d -c=javalaboratories-org.cer");
 
         boolean result = arguments.parse(args)
                 .fold(f -> false, f -> true);
@@ -35,9 +35,9 @@ public class DefaultCommandLineArgumentsTest {
 
     @Test
     public void testParse_MinimumEncryptArguments_Pass() {
-        String[] args = toArgs("-c=javalaboratories-org.cer -f=secret-text.txt -e");
+        String[] args = toArgs("-k=javalaboratories-org.cer -f=secret-text.txt -e");
         arguments.parse(args);
-        assertEquals("javalaboratories-org.cer",arguments.getValue("c"));
+        assertEquals("javalaboratories-org.cer",arguments.getValue("k"));
     }
 
     @Test
@@ -74,7 +74,7 @@ public class DefaultCommandLineArgumentsTest {
 
     @Test
     public void testGetBoolValue_Pass() {
-        String[] args = toArgs("-p=6553772 -f=secret-text.txt._encrypted -d");
+        String[] args = toArgs("-p=private-key.key -f=secret-text.txt._encrypted -d");
         arguments.parse(args);
 
         assertTrue(arguments.getBoolValue("d"));
@@ -82,7 +82,7 @@ public class DefaultCommandLineArgumentsTest {
 
     @Test
     public void testGetModeValue_Decrypt_Pass() {
-        String[] args = toArgs("-p=6553772 -f=secret-text.txt._encrypted -d");
+        String[] args = toArgs("-p=private-key.key -f=secret-text.txt._encrypted -d");
         arguments.parse(args);
 
         assertEquals(Mode.DECRYPT, arguments.getModeValue());
@@ -90,7 +90,7 @@ public class DefaultCommandLineArgumentsTest {
 
     @Test
     public void testGetModeValue_Encrypt_Pass() {
-        String[] args = toArgs("-c=javalaboratories-org.cer -f=secret-text.txt -e");
+        String[] args = toArgs("-k=javalaboratories-org.cer -f=secret-text.txt -e");
         arguments.parse(args);
 
         assertEquals(Mode.ENCRYPT, arguments.getModeValue());
