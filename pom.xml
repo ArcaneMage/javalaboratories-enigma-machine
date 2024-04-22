@@ -20,6 +20,7 @@
         <yaml-version>2.2</yaml-version>
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
         <dependency>
@@ -68,12 +69,24 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                    <compilerArgs>--enable-preview</compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.21.0</version>
                 <configuration>
                     <systemPropertyVariables>
                         <TEST_MODE>true</TEST_MODE>
                     </systemPropertyVariables>
+                    <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                    <argLine>--enable-preview</argLine>
                 </configuration>
                 <dependencies>
                     <dependency>
