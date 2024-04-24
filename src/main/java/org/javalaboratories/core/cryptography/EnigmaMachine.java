@@ -20,7 +20,11 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.StringTemplate.STR;
-import static org.javalaboratories.core.cryptography.CommandLineArguments.*;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_INPUT_FILE;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_OUTPUT_FILE;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_PRIVATE_KEY_FILE;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_PUBLIC_KEY_FILE;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.Mode;
 
 /**
  * Enigma Machine is an asymmetric cryptographic class that has the ability to
