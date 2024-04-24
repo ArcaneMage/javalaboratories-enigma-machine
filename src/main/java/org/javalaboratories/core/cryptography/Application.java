@@ -17,7 +17,7 @@ public final class Application {
             int code = 1;
             ApplicationBuildInformation build = new ApplicationBuildInformation();
             logger.info("\nEnigma Machine v{}, build ({})",build.getVersion(), build.getTimestamp());
-            logger.info("Java Laboratories, Kevin Henry (c) 2021\n");
+            logger.info("Java Laboratories, Kevin Henry (c) 2024\n");
             if ( arguments.parse(args)
                     .onFailure(s -> logger.error("Syntax error: {}",s.getMessage()))
                     .fold(f -> false, f -> true) ) {
