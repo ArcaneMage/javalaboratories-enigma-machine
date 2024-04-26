@@ -1,8 +1,7 @@
 package org.javalaboratories.core.cryptography;
 
 import org.javalaboratories.core.Try;
-import org.javalaboratories.core.cryptography.keys.KeyFileFormatter;
-import org.javalaboratories.core.cryptography.keys.PrivateKeyStore;
+import org.javalaboratories.core.cryptography.keys.RsaKeys;
 import org.javalaboratories.core.util.Arguments;
 import org.javalaboratories.core.util.StopWatch;
 import org.slf4j.Logger;
@@ -15,12 +14,17 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
+import java.security.PublicKey;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static org.javalaboratories.core.cryptography.CommandLineArguments.*;
+import static java.lang.StringTemplate.STR;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_INPUT_FILE;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_OUTPUT_FILE;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_PRIVATE_KEY_FILE;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_PUBLIC_KEY_FILE;
+import static org.javalaboratories.core.cryptography.CommandLineArguments.Mode;
 
 /**
  * Enigma Machine is an asymmetric cryptographic class that has the ability to
@@ -45,20 +49,12 @@ public class EnigmaMachine {
 
     private static final Logger logger = LoggerFactory.getLogger(EnigmaMachine.class);
 
-    private static final String PUBLIC_CERTIFICATE_TYPE = "X.509";
     private static final String DEFAULT_ENCRYPTED_FILE_EXTENSION = ".enc";
-    private static final String DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION = ".key";
     private static final String DEFAULT_DECRYPTED_FILE_EXTENSION = ".dcr";
-    private static final String DEFAULT_KEYSTORE_PASSWORD = "changeit";
-    private static final String KEY_FILE_BEGIN_HEADER = "Begin AES Secret-Key, RSA Encrypted";
-    private static final String KEY_FILE_END_HEADER = "End AES Secret-Key, RSA Encrypted";
 
     private final CommandLineArguments arguments;
     private final Path fileInputPath;
     private final Path fileOutputPath;
-    private final Path keyStoreFilePath;
-    private final String privateKeyAlias;
-    private final String keyStorePassword;
 
     /**
      * Constructs an instance of this class with the {@link CommandLineArguments}
@@ -73,10 +69,6 @@ public class EnigmaMachine {
         fileInputPath = Paths.get(arguments.getValue(ARG_INPUT_FILE));
         String fop = arguments.getValue(ARG_OUTPUT_FILE);
         fileOutputPath = fop == null ? getFileOutputPath() : Paths.get(fop); // default to <file>.enc | <file>.dcr
-        keyStoreFilePath = Paths.get(arguments.getValue(ARG_KEYS_VAULT)); // already defaulted
-        String ksPassword = arguments.getValue(ARG_KEYSTORE_PASSWORD);
-        keyStorePassword = ksPassword == null ? DEFAULT_KEYSTORE_PASSWORD : ksPassword; // already defaulted
-        privateKeyAlias = arguments.getValue(ARG_PRIVATE_KEYS_ALIAS); // already defaulted
     }
 
     /**
@@ -92,7 +84,7 @@ public class EnigmaMachine {
      * successfully otherwise {@code false}.
      */
     public boolean execute() {
-        AsymmetricCryptography cryptography = CryptographyFactory.getSunAsymmetricCryptography();
+        RsaHybridCryptography cryptography = CryptographyFactory.getAsymmetricHybridCryptography();
         StopWatch watch = StopWatch.watch("execute");
         boolean result = watch.time(() ->
                 Try.of(() -> new FileInputStream(fileInputPath.toFile()))
@@ -111,23 +103,15 @@ public class EnigmaMachine {
      * the decrypted data to a file.
      * <p>
      * If the output filename is unknown, the default name will be the {@code input
-     * file's} filename with the extension ".dcr". Decryption does require a
-     * private key and this is retrieved from the default {@code keys-vault.jks}
-     * file (overridable with the -v switch). Unless otherwise specified it is
-     * assumed the private key is stored in the default {@code javalaboratories-org}
-     * alias. This too is overridable with the {@code -a switch}.
-     * <p>
-     * @param cryptography object required for encryption operation.
+     * file's} filename with the extension ".dcr".
+     *
+     * @param cryptography object required for encryption/decryption operation.
      * @param istream InputStream object, normally file based.
      * @return try object encapsulating success/failure of decryption.
      */
-    protected Try<AsymmetricCryptography> tryDecrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
+    protected Try<RsaHybridCryptography> tryDecrypt(final RsaHybridCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
-        return Try.of(() -> PrivateKeyStore.builder()
-                            .keyStoreStream(new FileInputStream(keyStoreFilePath.toFile()))
-                            .storePassword(keyStorePassword)
-                            .build())
-                .flatMap(this::tryPrivateKey)
+        return Try.of(() -> RsaKeys.getPrivateKeyFrom(new FileInputStream(arguments.getValue(ARG_PRIVATE_KEY_FILE))))
                 .flatMap(key -> tryDecrypt(cryptography,key,istream));
     }
 
@@ -137,65 +121,41 @@ public class EnigmaMachine {
      * <p>
      * If the output filename is unknown, the default name will be the {@code
      * input file's} filename with the extension ".enc".
-     * <p>
+     *
      * @param cryptography object required for encryption operation.
      * @param istream InputStream object, normally file based.
      * @return try object encapsulating success/failure of encryption.
      */
-    protected Try<AsymmetricCryptography> tryEncrypt(final AsymmetricCryptography cryptography, final InputStream istream) {
+    protected Try<RsaHybridCryptography> tryEncrypt(final RsaHybridCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
-        return Try.of(() -> CertificateFactory.getInstance(PUBLIC_CERTIFICATE_TYPE))
-                .flatMap(factory -> Try.of(() -> factory.generateCertificate(new FileInputStream(arguments.getValue(ARG_CERTIFICATE)))))
-                .flatMap(certificate -> tryEncrypt(cryptography,certificate,istream));
+        return Try.of(() -> RsaKeys.getPublicKeyFrom(new FileInputStream(arguments.getValue(ARG_PUBLIC_KEY_FILE))))
+                .flatMap(publicKey -> tryEncrypt(cryptography,publicKey,istream));
     }
 
     private Path getFileOutputPath() {
         String ext = arguments.getModeValue() == Mode.ENCRYPT ? DEFAULT_ENCRYPTED_FILE_EXTENSION : DEFAULT_DECRYPTED_FILE_EXTENSION;
-        return Paths.get(".", PathUtils.truncateFileExt(fileInputPath).toString() + ext);
+        return Paths.get(".", PathUtils.truncateFileExt(fileInputPath) + ext);
     }
 
-    private InputStream getKeyFileInputStream() {
-        String keyFilename =  PathUtils.truncateFileExt(fileInputPath).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
-        return Try.of(() -> new FileInputStream(keyFilename))
-                .orElseThrow(() -> new CryptographyException("Requires read/access to secret-key file"));
-    }
-
-    private OutputStream getKeyFileOutputStream() {
-        String keyFilename =  PathUtils.truncateFileExt(fileOutputPath).toString()+DEFAULT_ENCRYPTED_KEY_FILE_EXTENSION;
-        return Try.of(() -> new FileOutputStream(keyFilename))
-                .orElseThrow(() -> new CryptographyException("Failed to create secret-key file"));
-    }
-
-    private Try<AsymmetricCryptography> tryDecrypt(final AsymmetricCryptography cryptography, final PrivateKey privateKey,
+    private Try<RsaHybridCryptography> tryDecrypt(final RsaHybridCryptography cryptography, final PrivateKey privateKey,
                                                    final InputStream istream) {
         return Try.of (() -> {
             OutputStream ostream = new FileOutputStream(fileOutputPath.toFile());
-            EncryptedAesKey key = new EncryptedAesKey(KeyFileFormatter.from(getKeyFileInputStream()).getKey());
-            cryptography.decrypt(privateKey,key,istream,ostream);
+            StreamCryptographyResult<PrivateKey,OutputStream> result = cryptography.decrypt(privateKey,istream,ostream);
+            result.getMessageHash()
+                    .ifPresent(h -> logger.info(STR."Successfully decrypted, message hash=\{Base64.getEncoder().encodeToString(h)}"));
             return cryptography;
         });
     }
 
-    private Try<AsymmetricCryptography> tryEncrypt(final AsymmetricCryptography cryptography, final Certificate cert,
+    private Try<RsaHybridCryptography> tryEncrypt(final RsaHybridCryptography cryptography, final PublicKey publicKey,
                                                    final InputStream istream) {
         return Try.of(() -> {
             OutputStream ostream = new FileOutputStream(fileOutputPath.toFile());
-            OutputStream kstream = getKeyFileOutputStream();
-            EncryptedAesKey key = cryptography.encrypt(cert, istream, ostream);
-            KeyFileFormatter format = new KeyFileFormatter(key.getKey(),false, KEY_FILE_BEGIN_HEADER, KEY_FILE_END_HEADER);
-            format.write(kstream);
+            StreamCryptographyResult<PublicKey,OutputStream> result =  cryptography.encrypt(publicKey, istream, ostream);
+            result.getMessageHash()
+                    .ifPresent(h -> logger.info(STR."Successfully encrypted, message hash=\{Base64.getEncoder().encodeToString(h)}"));
             return cryptography;
         });
-    }
-
-    private Try<PrivateKey> tryPrivateKey(final PrivateKeyStore store) {
-        PrivateKey key;
-        try {
-            key = store.getKey(privateKeyAlias, arguments.getValue(ARG_PRIVATE_KEYS_PASSWORD))
-                    .orElseThrow(() -> new IllegalArgumentException("Private key not found/undefined"));
-            return Try.success(key);
-        } catch (CryptographyException | IllegalArgumentException e) {
-            return Try.failure(e);
-        }
     }
 }

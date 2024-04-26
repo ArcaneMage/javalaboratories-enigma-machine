@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Deprecated
 public final class Configuration {
 
     private static final String CONFIGURATION_FILE="default-config.yml";

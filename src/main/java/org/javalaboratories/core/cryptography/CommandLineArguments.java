@@ -17,26 +17,20 @@ import java.io.PrintWriter;
 public interface CommandLineArguments {
     enum Mode {DECRYPT, ENCRYPT}
 
-    String ARG_PRIVATE_KEYS_ALIAS = "a";
-    String ARG_CERTIFICATE = "c";
+    String ARG_PUBLIC_KEY_FILE = "k";
     String ARG_DECRYPT = "d";
     String ARG_ENCRYPT = "e";
     String ARG_INPUT_FILE = "f";
     String ARG_HELP = "h";
-    String ARG_KEYSTORE_PASSWORD = "k";
     String ARG_OUTPUT_FILE = "o";
-    String ARG_PRIVATE_KEYS_PASSWORD = "p";
-    String ARG_KEYS_VAULT = "v";
+    String ARG_PRIVATE_KEY_FILE = "p";
 
-    String LONG_ARG_PRIVATE_KEYS_ALIAS = "private-key-alias";
-    String LONG_ARG_CERTIFICATE = "certificate";
+    String LONG_ARG_PUBLIC_KEY_FILE = "public-key-file";
     String LONG_ARG_DECRYPT = "decrypt";
     String LONG_ARG_ENCRYPT = "encrypt";
-    String LONG_ARG_INPUT_FILE = "file";
-    String LONG_ARG_KEYSTORE_PASSWORD = "keystore-password";
+    String LONG_ARG_INPUT_FILE = "input-file";
     String LONG_ARG_OUTPUT_FILE = "output-file";
-    String LONG_ARG_PRIVATE_KEYS_PASSWORD = "private-key-password";
-    String LONG_ARG_KEYS_VAULT = "vault";
+    String LONG_ARG_PRIVATE_KEY_FILE = "private-key-file";
 
     /**
      * Parses the supplied arguments and validates them against argument rules.

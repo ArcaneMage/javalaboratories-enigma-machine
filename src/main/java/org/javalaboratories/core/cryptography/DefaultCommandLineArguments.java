@@ -1,13 +1,10 @@
 package org.javalaboratories.core.cryptography;
 
 import org.apache.commons.cli.*;
-import org.javalaboratories.core.Eval;
 import org.javalaboratories.core.Try;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -23,13 +20,12 @@ import java.util.Objects;
  */
 public class DefaultCommandLineArguments implements CommandLineArguments {
 
-    private static final String COMMAND_SYNTAX = "enigma-machine [--encrypt --certificate=<arg>] | " +
-            "[--decrypt --private-key-password=<arg>] [--output-file=<arg>] -file=<arg>";
+    private static final String COMMAND_SYNTAX = "enigma-machine [--encrypt --public-key-file=<arg>] | " +
+            "[--decrypt --private-key-file=<arg>] [--output-file=<arg>] -input-file=<arg>";
 
     private Mode mode;
     private CommandLine commandLine;
     private final Options options;
-    private final Eval<Map<String,String>> defaultValues;
     private boolean initialised;
     private final Configuration configuration;
 
@@ -38,7 +34,6 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
      */
     public DefaultCommandLineArguments(Configuration c) {
         Objects.requireNonNull(c);
-        defaultValues = Eval.later(this::createDefaultValues);
         options = createOptions();
         initialised = false;
         this.configuration = c;
@@ -86,13 +81,7 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
         Objects.requireNonNull(option);
         if (!initialised)
             throw new IllegalStateException();
-        String value = commandLine.getOptionValue(option);
-        // Check whether it's defaulted
-        if (value == null)
-            value = defaultValues
-                    .get()
-                    .get(option);
-        return value;
+        return  commandLine.getOptionValue(option);
     }
 
     /**
@@ -116,21 +105,21 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
 
     private void applyArgumentRules() {
         if (commandLine.hasOption(ARG_ENCRYPT)) {
-            // Required args: -cf
-            if (!(commandLine.hasOption(ARG_CERTIFICATE) && commandLine.hasOption(ARG_INPUT_FILE)))
-                throw new IllegalArgumentException("Requires public certificate and a file to encrypt: -c -f");
+            // Required args: -kf
+            if (!(commandLine.hasOption(ARG_PUBLIC_KEY_FILE) && commandLine.hasOption(ARG_INPUT_FILE)))
+                throw new IllegalArgumentException("Requires public key and a file to encrypt: -k -f");
             // Not allowable in encryption mode
-            if (hasAnyOption(ARG_PRIVATE_KEYS_ALIAS,ARG_KEYSTORE_PASSWORD,ARG_PRIVATE_KEYS_PASSWORD,ARG_KEYS_VAULT)) {
-                throw new IllegalArgumentException("Arguments (-a,-k,-p,-v) not allowable in encryption mode");
+            if (hasAnyOption(ARG_PRIVATE_KEY_FILE)) {
+                throw new IllegalArgumentException("Arguments (-d, -p) are not allowable in encryption mode");
             }
         } else {
             if (commandLine.hasOption(ARG_DECRYPT)) {
                 // Required args: -pf
-                if (!(commandLine.hasOption(ARG_PRIVATE_KEYS_PASSWORD) && commandLine.hasOption(ARG_INPUT_FILE)))
+                if (!(commandLine.hasOption(ARG_PRIVATE_KEY_FILE) && commandLine.hasOption(ARG_INPUT_FILE)))
                     throw new IllegalArgumentException("Requires private key password and a file to decrypt: -p -f");
                 // Not allowable in decryption mode
-                if (hasAnyOption(ARG_CERTIFICATE)) {
-                    throw new IllegalArgumentException("Arguments (-c) not allowable in decryption mode");
+                if (hasAnyOption(ARG_PUBLIC_KEY_FILE)) {
+                    throw new IllegalArgumentException("Arguments (-d, -k) not allowable in decryption mode");
                 }
             } else
                 throw new IllegalArgumentException("Which? Encryption or decryption, one or the other is required: -d | -e");
@@ -140,28 +129,16 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
     private Options createOptions() {
         // enigma -v vaultFile -a privateKeyAlias -p privateKeyPasswd -c public-certificate -e encrypt -d decrypt
         Options result = new Options();
-        result.addOption(Option.builder(ARG_PRIVATE_KEYS_ALIAS)
-                    .longOpt(LONG_ARG_PRIVATE_KEYS_ALIAS)
+        result.addOption(Option.builder(ARG_PRIVATE_KEY_FILE)
+                    .longOpt(LONG_ARG_PRIVATE_KEY_FILE)
                     .hasArg()
-                    .desc("Private keys alias, default name \"private-key-alias\"")
+                    .desc("Private key file")
                     .optionalArg(false)
                     .build())
-                .addOption(Option.builder(ARG_PRIVATE_KEYS_PASSWORD)
-                    .longOpt(LONG_ARG_PRIVATE_KEYS_PASSWORD)
+                .addOption(Option.builder(ARG_PUBLIC_KEY_FILE)
+                    .longOpt(LONG_ARG_PUBLIC_KEY_FILE)
                     .hasArg()
-                    .desc("Private keys password")
-                    .optionalArg(false)
-                    .build())
-                .addOption(Option.builder(ARG_KEYSTORE_PASSWORD)
-                    .longOpt(LONG_ARG_KEYSTORE_PASSWORD)
-                    .hasArg()
-                    .desc("Keystore password")
-                    .optionalArg(false)
-                    .build())
-                .addOption(Option.builder(ARG_CERTIFICATE)
-                    .longOpt(LONG_ARG_CERTIFICATE)
-                    .hasArg()
-                    .desc("Public certificate file")
+                    .desc("Public key file")
                     .build())
                 .addOption(Option.builder(ARG_DECRYPT)
                     .longOpt(LONG_ARG_DECRYPT)
@@ -183,27 +160,12 @@ public class DefaultCommandLineArguments implements CommandLineArguments {
                     .hasArg(false)
                     .desc("Help")
                     .build())
-                .addOption(Option.builder(ARG_KEYS_VAULT)
-                    .longOpt(LONG_ARG_KEYS_VAULT)
-                    .hasArg(true)
-                    .desc("Private keys vault, default name \"keys-vault.jks\"")
-                    .optionalArg(false)
-                    .build())
                 .addOption(Option.builder(ARG_OUTPUT_FILE)
                     .longOpt(LONG_ARG_OUTPUT_FILE)
                     .hasArg(true)
                     .desc("Output filepath, default name is \"<file>.enc\" | \"<file>.dcr\", depending on mode")
                     .optionalArg(false)
                     .build());
-        return result;
-    }
-
-    private Map<String,String> createDefaultValues() {
-        String keyStoreDir = configuration.getConfigDirectory();
-        Map<String,String> result = new HashMap<>();
-        result.put("a", configuration.getDefaults().getKeyStore().getPrivateKeyAlias());
-        result.put("k", configuration.getDefaults().getKeyStore().getPassword());
-        result.put("v", keyStoreDir+configuration.getDefaults().getKeyStore().getFile());
         return result;
     }
 

@@ -36,7 +36,7 @@ public class EnigmaMachineTest {
     public void testExecute_A_Encryption_Pass() {
         // Given
         CommandLineArguments arguments = new DefaultCommandLineArguments(configuration);
-        arguments.parse(toArgs("-c=src/test/resources/public-certificate-test.cer -f=src/test/resources/text.original.data -e -o=src/test/resources/text.out.enc"));
+        arguments.parse(toArgs("-k=src/test/resources/rsa-public-key.pem -f=src/test/resources/text.original.data -e -o=src/test/resources/text.out.enc"));
         EnigmaMachine machine = new EnigmaMachine(arguments);
 
         // When
@@ -50,7 +50,7 @@ public class EnigmaMachineTest {
     public void testExecute_B_Decryption_Pass() {
         // Given
         CommandLineArguments arguments = new DefaultCommandLineArguments(configuration);
-        arguments.parse(toArgs("-v=src/test/resources/keys-vault.jks -p=TESTING -f=src/test/resources/text.out.enc -d -o=src/test/resources/text.out"));
+        arguments.parse(toArgs("-p=src/test/resources/rsa-private-key-pkcs8.pem -f=src/test/resources/text.out.enc -d -o=src/test/resources/text.out"));
         EnigmaMachine machine = new EnigmaMachine(arguments);
 
         // When
