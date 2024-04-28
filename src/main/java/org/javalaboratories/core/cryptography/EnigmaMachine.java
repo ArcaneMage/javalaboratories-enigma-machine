@@ -2,6 +2,8 @@ package org.javalaboratories.core.cryptography;
 
 import org.javalaboratories.core.Try;
 import org.javalaboratories.core.cryptography.keys.RsaKeys;
+import org.javalaboratories.core.tuple.Pair;
+import org.javalaboratories.core.tuple.Tuple2;
 import org.javalaboratories.core.util.Arguments;
 import org.javalaboratories.core.util.StopWatch;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import java.security.PublicKey;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static java.lang.StringTemplate.STR;
 import static org.javalaboratories.core.cryptography.CommandLineArguments.ARG_INPUT_FILE;
@@ -92,7 +95,7 @@ public class EnigmaMachine {
                         ? tryEncrypt(cryptography,istream)
                         : tryDecrypt(cryptography,istream))
                 .onFailure(f -> logger.error("Failed to process file \"{}\", error: {}",fileInputPath,f.getMessage()))
-                .fold(f -> false,c -> true));
+                .fold(false, Function.identity()));
         if (result)
             logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
         return result;
@@ -109,10 +112,10 @@ public class EnigmaMachine {
      * @param istream InputStream object, normally file based.
      * @return try object encapsulating success/failure of decryption.
      */
-    protected Try<RsaHybridCryptography> tryDecrypt(final RsaHybridCryptography cryptography, final InputStream istream) {
+    protected Try<Boolean> tryDecrypt(final RsaHybridCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
         return Try.of(() -> RsaKeys.getPrivateKeyFrom(new FileInputStream(arguments.getValue(ARG_PRIVATE_KEY_FILE))))
-                .flatMap(key -> tryDecrypt(cryptography,key,istream));
+                .flatMap(privateKey -> tryDecrypt(cryptography,privateKey,istream));
     }
 
     /**
@@ -126,7 +129,7 @@ public class EnigmaMachine {
      * @param istream InputStream object, normally file based.
      * @return try object encapsulating success/failure of encryption.
      */
-    protected Try<RsaHybridCryptography> tryEncrypt(final RsaHybridCryptography cryptography, final InputStream istream) {
+    protected Try<Boolean> tryEncrypt(final RsaHybridCryptography cryptography, final InputStream istream) {
         Arguments.requireNonNull("Parameters cryptography and istream mandatory",cryptography,istream);
         return Try.of(() -> RsaKeys.getPublicKeyFrom(new FileInputStream(arguments.getValue(ARG_PUBLIC_KEY_FILE))))
                 .flatMap(publicKey -> tryEncrypt(cryptography,publicKey,istream));
@@ -137,25 +140,17 @@ public class EnigmaMachine {
         return Paths.get(".", PathUtils.truncateFileExt(fileInputPath) + ext);
     }
 
-    private Try<RsaHybridCryptography> tryDecrypt(final RsaHybridCryptography cryptography, final PrivateKey privateKey,
+    private Try<Boolean> tryDecrypt(final RsaHybridCryptography cryptography, final PrivateKey privateKey,
                                                    final InputStream istream) {
-        return Try.of (() -> {
-            OutputStream ostream = new FileOutputStream(fileOutputPath.toFile());
-            StreamCryptographyResult<PrivateKey,OutputStream> result = cryptography.decrypt(privateKey,istream,ostream);
-            result.getMessageHash()
-                    .ifPresent(h -> logger.info(STR."Successfully decrypted, message hash=\{Base64.getEncoder().encodeToString(h)}"));
-            return cryptography;
-        });
+        return Try.of(() -> cryptography.decrypt(privateKey,istream,new FileOutputStream(fileOutputPath.toFile())))
+                .onFailure(f -> logger.info(STR."Failed to decrypt message:\{f.getMessage()}"))
+                .map(Objects::nonNull);
     }
 
-    private Try<RsaHybridCryptography> tryEncrypt(final RsaHybridCryptography cryptography, final PublicKey publicKey,
+    private Try<Boolean> tryEncrypt(final RsaHybridCryptography cryptography, final PublicKey publicKey,
                                                    final InputStream istream) {
-        return Try.of(() -> {
-            OutputStream ostream = new FileOutputStream(fileOutputPath.toFile());
-            StreamCryptographyResult<PublicKey,OutputStream> result =  cryptography.encrypt(publicKey, istream, ostream);
-            result.getMessageHash()
-                    .ifPresent(h -> logger.info(STR."Successfully encrypted, message hash=\{Base64.getEncoder().encodeToString(h)}"));
-            return cryptography;
-        });
+        return Try.of(() -> cryptography.encrypt(publicKey,istream,new FileOutputStream(fileOutputPath.toFile())))
+                .onFailure(f -> logger.info(STR."Failed to encrypt message:\{f.getMessage()}"))
+                .map(Objects::nonNull);
     }
 }
