@@ -1,6 +1,7 @@
 package org.javalaboratories.core.cryptography;
 
 import lombok.Value;
+import org.javalaboratories.core.Try;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,16 +16,16 @@ public class ApplicationBuildInformation {
     String timestamp;
 
     public ApplicationBuildInformation() {
-        InputStream istream = this.getClass().getResourceAsStream(APPLICATION_PROPERTIES);
-        Properties properties = new Properties();
-        try {
-            properties.load(istream);
-        } catch (IOException e) {
-            // Handled
-        }
+        Properties properties = Try.with(() -> this.getClass().getResourceAsStream(APPLICATION_PROPERTIES), this::loadBuildProperties)
+                .orElseThrow(() -> new IllegalStateException("Application properties not available"));
         artifact = properties.getProperty("artifact");
         version = properties.getProperty("version");
         timestamp = properties.getProperty("build.timestamp");
+    }
 
+    private Properties loadBuildProperties(InputStream stream) throws IOException {
+        Properties p = new Properties();
+        p.load(stream);
+        return p;
     }
 }
