@@ -92,7 +92,7 @@ public class EnigmaMachine {
                         ? tryEncrypt(cryptography,istream)
                         : tryDecrypt(cryptography,istream))
                 .onFailure(f -> logger.error("Failed to process file \"{}\", error: {}",fileInputPath,f.getMessage()))
-                .fold(f -> false,f -> true));
+                .fold(f -> false,c -> true));
         if (result)
             logger.info("Processed \"{}\" file in {}ms", fileInputPath, watch.getTime(TimeUnit.MILLISECONDS));
         return result;
